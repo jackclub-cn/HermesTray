@@ -263,7 +263,6 @@ async fn get_status(
 
 #[tauri::command]
 async fn send_chat(
-    app: AppHandle,
     config: tauri::State<'_, Config>,
     session_id: String,
     message: String,
@@ -273,34 +272,7 @@ async fn send_chat(
         (file.api_url.clone(), file.api_key.clone())
     };
     let api = HermesApi::new();
-
-    // Emit busy status while sending
-    let _ = app.emit(
-        "hermes-status",
-        serde_json::json!({ "status": "busy" }),
-    );
-    if let Some(tray) = app.tray_by_id("main") {
-        let icon = tray::make_tray_icon(255, 170, 50);
-        let _ = tray.set_icon(Some(icon));
-        let _ = tray.set_tooltip(Some("HermesTray — busy"));
-    }
-
-    let result = api.send_message(&url, &key, &session_id, &message).await;
-
-    // After completion, query real status
-    let real_status = api.poll_status(&url, &key).await;
-    let status_str = match &real_status {
-        ConnectionStatus::Disconnected => "disconnected",
-        ConnectionStatus::Idle => "idle",
-        ConnectionStatus::Busy => "busy",
-    };
-    let _ = app.emit(
-        "hermes-status",
-        serde_json::json!({ "status": status_str }),
-    );
-    tray::update_tray(&app, &real_status);
-
-    result
+    api.send_message(&url, &key, &session_id, &message).await
 }
 
 #[tauri::command]
