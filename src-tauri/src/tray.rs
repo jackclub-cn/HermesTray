@@ -11,53 +11,52 @@ struct TrayIcons {
 
 static TRAY_ICONS: OnceLock<TrayIcons> = OnceLock::new();
 
-/// Render a 32×32 tray icon: "H" letter + status dot at bottom-right
-fn render_icon(dot_r: u8, dot_g: u8, dot_b: u8) -> Image<'static> {
-    let size: u32 = 32;
-    let w = size as i32;
-    let mut pixels = Vec::with_capacity((w * w * 4) as usize);
+/// Render a 32×32 tray icon: "H" letter on a colored circular background
+fn render_icon(bg_r: u8, bg_g: u8, bg_b: u8) -> Image<'static> {
+    let size: i32 = 32;
+    let w = size as usize;
+    let mut pixels = Vec::with_capacity(w * w * 4);
 
-    // "H" bitmap — bolder, centered
-    let h_left = 7;
-    let h_right = h_left + 7;
-    let h_top = 6;
-    let h_bot = 28;
-    let h_mid = 17; // crossbar
+    // Bounding box for the H letter — wider than before
+    let h_left = 5;
+    let h_right = 26;
+    let h_top = 7;
+    let h_bot = 26;
+    let h_mid = 16; // crossbar
 
-    // Dot position (bottom-right corner)
-    let d_cx = 24;
-    let d_cy = 24;
-    let d_radius = 5;
+    // Circle background — centered
+    let cc = 15.5; // center (15,15) with anti-aliasing
+    let bg_radius = 15.0;
+    let aa = 1.2;
 
-    for y in 0..w {
-        for x in 0..w {
+    for y in 0..size {
+        for x in 0..size {
             let (mut px_r, mut px_g, mut px_b, mut alpha) = (0u8, 0u8, 0u8, 0u8);
 
-            // ── H letter (white) ──
-            let in_left = x >= h_left && x <= h_left + 2; // left stem
-            let in_right = x >= h_right - 2 && x <= h_right; // right stem
+            // ── Circular background ──
+            let dx = (x as f64 - cc).powi(2);
+            let dy = (y as f64 - cc).powi(2);
+            let dist = (dx + dy).sqrt();
+
+            if dist < bg_radius {
+                alpha = 255;
+                (px_r, px_g, px_b) = (bg_r, bg_g, bg_b);
+            } else if dist < bg_radius + aa {
+                let t = (dist - bg_radius) / aa;
+                let a = ((1.0 - t) * 255.0) as u8;
+                alpha = a;
+                (px_r, px_g, px_b) = (bg_r, bg_g, bg_b);
+            }
+
+            // ── H letter (white, overlay on background) ──
+            let stem_w = 3; // width of each vertical stem
+            let in_left = x >= h_left && x <= h_left + stem_w;
+            let in_right = x >= h_right - stem_w && x <= h_right;
             let in_cross = y >= h_mid - 1 && y <= h_mid + 1 && x >= h_left && x <= h_right;
 
             if (in_left || in_right || in_cross) && y >= h_top && y <= h_bot {
                 (px_r, px_g, px_b) = (255, 255, 255);
-                alpha = 255;
-            }
-
-            // ── Status dot (colored) ──
-            let dx = (x - d_cx).abs();
-            let dy = (y - d_cy).abs();
-            let dist = ((dx * dx + dy * dy) as f64).sqrt();
-            if dist < d_radius as f64 {
-                (px_r, px_g, px_b) = (dot_r, dot_g, dot_b);
-                alpha = 255;
-            } else if dist < d_radius as f64 + 1.0 {
-                // anti-alias edge
-                let t = (dist - d_radius as f64);
-                let a = ((1.0 - t) * 255.0) as u8;
-                if a > alpha {
-                    (px_r, px_g, px_b) = (dot_r, dot_g, dot_b);
-                    alpha = a;
-                }
+                alpha = 255; // solid white letter, no AA needed
             }
 
             pixels.push(px_r);
@@ -79,8 +78,7 @@ fn get_icons() -> &'static TrayIcons {
     })
 }
 
-/// Get a cached tray icon for the given status.
-/// Also serves as the init icon (gray dot).
+/// Get a cached tray icon for the given status
 pub fn make_tray_icon(r: u8, g: u8, b: u8) -> Image<'static> {
     let icons = get_icons();
     if r == 160 && g == 160 && b == 160 {
