@@ -2,7 +2,7 @@ use crate::api::ConnectionStatus;
 use std::sync::OnceLock;
 use tauri::image::Image;
 
-/// Pre-rendered tray icons — cached once, reused forever
+/// Pre-rendered tray icons — Hermes' winged sandal motif
 struct TrayIcons {
     disconnected: Image<'static>,
     idle: Image<'static>,
@@ -11,55 +11,70 @@ struct TrayIcons {
 
 static TRAY_ICONS: OnceLock<TrayIcons> = OnceLock::new();
 
-/// Render a 32×32 tray icon: bold "H" on colored circular background, clean & minimal
+/// Render a 32×32 tray icon: a pair of stylized wings (Hermes motif) on a colored circle
 fn render_icon(bg_r: u8, bg_g: u8, bg_b: u8) -> Image<'static> {
-    const SZ: i32 = 32;
-    let w = SZ as usize;
-    let mut pixels = Vec::with_capacity(w * w * 4);
+    let sz: i32 = 32;
+    let mut pixels = Vec::with_capacity((sz * sz * 4) as usize);
 
-    // ── Circle background ──
+    // Circle background centered at (15.5, 15.5), radius 14.5
     let cc = 15.5f64;
-    let bg_r2 = 14.5f64.powi(2); // radius² for fast inner check
-    let bg_aa = 1.2f64; // anti-alias band
+    let bg_r2 = 14.5f64 * 14.5f64;
+    let bg_aa = 1.2f64;
 
-    // ── H glyph (bold, compact, slightly off-center towards top for visual balance) ──
-    // Before: h_left=5 h_right=26 h_top=7 h_bot=26  (span 21×19)
-    // Now:    compact + bolder
-    let h_left = 6;
-    let h_right = 25;
-    let h_top = 7;
-    let h_bot = 26;
-    let h_mid = 16; // crossbar
-    let stem_w = 4; // wider stems for bold look
+    // Wings: two curved shapes spreading from center
+    // Each wing is a set of diagonal feather lines
+    // Left wing: from (13,16) sweeping up-left
+    // Right wing: from (19,16) sweeping up-right
 
-    for y in 0..SZ {
-        for x in 0..SZ {
+    for y in 0..sz {
+        for x in 0..sz {
             let (mut px_r, mut px_g, mut px_b, mut alpha) = (0u8, 0u8, 0u8, 0u8);
 
             // ── Background circle ──
             let d2 = (x as f64 - cc).powi(2) + (y as f64 - cc).powi(2);
             if d2 <= bg_r2 {
-                // Inside solid circle
                 alpha = 255;
                 (px_r, px_g, px_b) = (bg_r, bg_g, bg_b);
             } else {
                 let dist = d2.sqrt();
                 if dist < cc + bg_aa {
-                    // AA border
                     let t = (dist - (bg_r2.sqrt())) / bg_aa;
                     let a = ((1.0 - t).clamp(0.0, 1.0) * 255.0) as u8;
                     alpha = a;
                     (px_r, px_g, px_b) = (bg_r, bg_g, bg_b);
                 }
-                // else fully transparent
             }
 
-            // ── H glyph (white, bold) ──
-            let in_left = x >= h_left && x <= h_left + stem_w;
-            let in_right = x >= h_right - stem_w && x <= h_right;
-            let in_cross = y >= h_mid - 2 && y <= h_mid + 2 && x >= h_left && x <= h_right;
+            // ── Wings (white, Hermes messenger motif) ──
+            let on_wing = if y >= 8 && y <= 22 {
+                // Wing center at y=15, x ranges differently per row
+                let mid = 15.5f64;
+                let wing_y = y as f64 - mid; // -7..7
 
-            if (in_left || in_right || in_cross) && y >= h_top && y <= h_bot {
+                // Left wing feathers (top → bottom: fanning out)
+                let left_feather =
+                    // Top feather: sweeping left-up
+                    (wing_y >= -7.0 && wing_y <= -3.0 && x as f64 >= mid - 15.0 + wing_y.abs() && x as f64 <= mid - 2.0)
+                    // Middle feathers
+                    || (wing_y >= -3.0 && wing_y <= 0.0 && x as f64 >= mid - 12.0 && x as f64 <= mid - 1.0)
+                    // Bottom feathers
+                    || (wing_y >= 0.0 && wing_y <= 5.0 && x as f64 >= mid - 10.0 + wing_y * 0.5 && x as f64 <= mid - 1.0)
+                    // Core
+                    || (wing_y >= -2.0 && wing_y <= 2.0 && x as f64 >= mid - 6.0 && x as f64 <= mid - 2.0);
+
+                // Right wing feathers (mirror)
+                let right_feather =
+                    (wing_y >= -7.0 && wing_y <= -3.0 && x as f64 >= mid + 2.0 && x as f64 <= mid + 15.0 - wing_y.abs())
+                    || (wing_y >= -3.0 && wing_y <= 0.0 && x as f64 >= mid + 1.0 && x as f64 <= mid + 12.0)
+                    || (wing_y >= 0.0 && wing_y <= 5.0 && x as f64 >= mid + 1.0 && x as f64 <= mid + 10.0 - wing_y * 0.5)
+                    || (wing_y >= -2.0 && wing_y <= 2.0 && x as f64 >= mid + 2.0 && x as f64 <= mid + 6.0);
+
+                left_feather || right_feather
+            } else {
+                false
+            };
+
+            if on_wing {
                 (px_r, px_g, px_b) = (255, 255, 255);
                 alpha = 255;
             }
@@ -72,7 +87,7 @@ fn render_icon(bg_r: u8, bg_g: u8, bg_b: u8) -> Image<'static> {
     }
 
     let static_pixels: &'static [u8] = Box::leak(pixels.into_boxed_slice());
-    Image::new(static_pixels, SZ as u32, SZ as u32)
+    Image::new(static_pixels, sz as u32, sz as u32)
 }
 
 fn get_icons() -> &'static TrayIcons {
