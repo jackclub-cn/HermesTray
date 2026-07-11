@@ -6,6 +6,21 @@
 
 Monitor your Hermes Agent status and chat with it — right from your system tray.
 
+## Features
+
+- **System tray icon** — shows H letter on colored circle at a glance:
+  - 🟢 Green = idle (ready)
+  - 🟡 Orange = busy (processing)
+  - ⚪ Gray = disconnected
+- **Global shortcuts** — toggle window from anywhere:
+  - `Alt+Space` (configurable) — show/hide chat window
+  - `Ctrl+Alt+Shift+C` — quick input
+- **Chat interface** — send messages and receive responses
+- **Session management** — auto-creates sessions, start fresh anytime
+- **Configurable** — API URL, key, polling interval, hotkey, language all editable
+- **Chinese / English UI** — switch language from the header button or Settings
+- **Cross-platform** — Windows, macOS, Linux
+
 ## Download
 
 Latest stable version: **v0.1.0**
@@ -18,7 +33,7 @@ Latest stable version: **v0.1.0**
 
 👉 [All releases](https://github.com/jackclub-cn/HermesTray/releases)
 
-## Features
+## Prerequisites
 
 - **System tray icon** — shows H letter on colored circle at a glance:
   - 🟢 Green = idle (ready)
