@@ -12,38 +12,6 @@ pub enum ConnectionStatus {
     Busy,
 }
 
-/// Minimal representation of /health/detailed
-#[derive(Debug, Deserialize)]
-pub struct HealthDetailed {
-    pub status: String,
-    pub gateway_state: Option<String>,
-    pub active_agents: Option<u32>,
-    pub gateway_busy: Option<bool>,
-}
-
-/// Response from the chat streaming endpoint
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-pub struct ChatResponse {
-    pub choices: Option<Vec<ChatChoice>>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ChatChoice {
-    pub delta: Option<ChatDelta>,
-    pub message: Option<ChatMessage>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ChatDelta {
-    pub content: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ChatMessage {
-    pub content: Option<String>,
-}
-
 /// HTTP client for the Hermes API
 pub struct HermesApi {
     client: reqwest::Client,
@@ -52,7 +20,7 @@ pub struct HermesApi {
 impl HermesApi {
     pub fn new() -> Self {
         let client = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(10))
+            .timeout(std::time::Duration::from_secs(300))
             .build()
             .unwrap_or_default();
         Self { client }
@@ -86,17 +54,14 @@ impl HermesApi {
                         ConnectionStatus::Disconnected
                     }
                 }
-                Err(_) => ConnectionStatus::Idle, // health ok but parse failed -> assume alive
+                Err(_) => ConnectionStatus::Idle,
             },
-            Ok(resp) if resp.status().is_client_error() => {
-                // 401/403 -> server reachable but auth failed -> still "connected" in a sense
-                ConnectionStatus::Idle
-            }
+            Ok(resp) if resp.status().is_client_error() => ConnectionStatus::Idle,
             _ => ConnectionStatus::Disconnected,
         }
     }
 
-    /// Send a chat message and return the streaming URL or first response
+    /// Send a chat message and return the response text
     pub async fn send_message(
         &self,
         base_url: &str,
@@ -123,7 +88,36 @@ impl HermesApi {
         };
 
         let resp = req.send().await.map_err(|e| format!("Request failed: {}", e))?;
+        let status = resp.status();
         let text = resp.text().await.map_err(|e| format!("Read failed: {}", e))?;
+
+        if !status.is_success() {
+            return Err(format!("HTTP {}: {}", status.as_u16(), text));
+        }
+
+        // Try to parse as JSON; if it has a "response" or "content" field, extract it
+        if let Ok(json) = serde_json::from_str::<Value>(&text) {
+            if let Some(content) = json.get("response").and_then(|v| v.as_str()) {
+                return Ok(content.to_string());
+            }
+            if let Some(content) = json.get("content").and_then(|v| v.as_str()) {
+                return Ok(content.to_string());
+            }
+            if let Some(content) = json
+                .get("choices")
+                .and_then(|v| v.as_array())
+                .and_then(|arr| arr.first())
+                .and_then(|c| c.get("message"))
+                .and_then(|m| m.get("content"))
+                .and_then(|c| c.as_str())
+            {
+                return Ok(content.to_string());
+            }
+            // If JSON but no known field, return pretty-printed
+            return Ok(serde_json::to_string_pretty(&json).unwrap_or(text));
+        }
+
+        // Plain text response
         Ok(text)
     }
 

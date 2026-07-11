@@ -9,7 +9,7 @@ use tauri::{
     tray::TrayIconBuilder,
     AppHandle, Emitter, Manager, WindowEvent,
 };
-use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 /// Start background polling of Hermes API status
 fn start_status_poller(app: AppHandle) {
@@ -197,15 +197,28 @@ fn get_config(config: tauri::State<Config>) -> Result<config::ConfigFile, String
 
 #[tauri::command]
 fn update_config(
-    _app: AppHandle,
+    app: AppHandle,
     config: tauri::State<Config>,
     new_config: config::ConfigFile,
 ) -> Result<(), String> {
+    // Unregister old shortcuts
+    let gs = app.global_shortcut();
+    let _ = gs.unregister_all();
+
     {
         let mut file = config.file.lock().map_err(|e| e.to_string())?;
         *file = new_config;
     }
     config.save()?;
+
+    // Re-register shortcuts with new config
+    let gs = app.global_shortcut();
+    let toggle_key = config.file.lock().unwrap().toggle_hotkey.clone();
+    if !toggle_key.is_empty() {
+        if let Ok(shortcut) = Shortcut::try_from(toggle_key.as_str()) {
+            let _ = gs.register(shortcut);
+        }
+    }
 
     Ok(())
 }
