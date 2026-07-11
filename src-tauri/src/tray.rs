@@ -17,11 +17,11 @@ fn render_icon(dot_r: u8, dot_g: u8, dot_b: u8) -> Image<'static> {
     let w = size as i32;
     let mut pixels = Vec::with_capacity((w * w * 4) as usize);
 
-    // "H" bitmap — 6px wide, 18px tall, centered
-    let h_left = 9;
-    let h_right = h_left + 5;
-    let h_top = 8;
-    let h_bot = 27;
+    // "H" bitmap — bolder, centered
+    let h_left = 7;
+    let h_right = h_left + 7;
+    let h_top = 6;
+    let h_bot = 28;
     let h_mid = 17; // crossbar
 
     // Dot position (bottom-right corner)
@@ -35,7 +35,7 @@ fn render_icon(dot_r: u8, dot_g: u8, dot_b: u8) -> Image<'static> {
 
             // ── H letter (white) ──
             let in_left = x >= h_left && x <= h_left + 2; // left stem
-            let in_right = (x >= h_right - 2 && x <= h_right) || (x >= h_right - 1 && x <= h_right + 1); // right stem
+            let in_right = x >= h_right - 2 && x <= h_right; // right stem
             let in_cross = y >= h_mid - 1 && y <= h_mid + 1 && x >= h_left && x <= h_right;
 
             if (in_left || in_right || in_cross) && y >= h_top && y <= h_bot {
