@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { i18n, type Lang, type TKey } from "../i18n";
 
@@ -22,15 +22,34 @@ export function ChatPanel({ lang }: Props) {
   const [sending, setSending] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea: default no scrollbar, grows up to ~3 lines, then scrolls
+  const autoResize = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    // scrollHeight includes padding; max-height (90px) is enforced by CSS
+    ta.style.height = Math.min(ta.scrollHeight, 90) + "px";
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Resize on input change
+  useEffect(() => {
+    autoResize();
+  }, [input, autoResize]);
+
   const sendMessage = async () => {
     const text = input.trim();
     if (!text || sending) return;
     setInput("");
+    // Reset textarea height after sending
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
     setSending(true);
 
     const userMsg: Message = { role: "user", content: text, id: `u-${Date.now()}` };
@@ -89,6 +108,7 @@ export function ChatPanel({ lang }: Props) {
       </div>
       <div className="chat-input-bar">
         <textarea
+          ref={textareaRef}
           className="chat-input"
           value={input}
           onChange={(e) => setInput(e.target.value)}
