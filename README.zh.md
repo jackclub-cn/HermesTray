@@ -181,6 +181,21 @@ HermesTray 每隔 N 秒（可配置，默认 3 秒）轮询 `GET /health/detaile
 
 [English Documentation](README.md)
 
+## TODO
+
+### CLI 状态监听
+
+当前 HermesTray 只能通过 gateway 平台的 agent 检测繁忙状态（Telegram、Mattermost 等）。
+CLI 会话是独立进程，API 无法感知其工作状态。
+
+**思路：** 编写一个插件，在 `pre_llm_call` / `post_llm_call` 钩子中通过 Hermes API Server 推送状态，
+使 HermesTray 可通过远程 API 轮询，无需反向连接。
+
+参见 [issue 讨论](https://github.com/jackclub-cn/HermesTray/issues) 了解各方案。
+
+- [ ] CLI 状态写入 API 端点（插件写入，API Server 提供读取）
+- [ ] 远程 Hermes CLI 会话的实时忙碌/空闲检测
+
 ## 许可证
 
 MIT

@@ -185,6 +185,21 @@ Config is saved to `~/HermesTray/config.json`.
 
 [English Documentation](README.md)
 
+## TODO
+
+### CLI Status Monitoring
+
+Currently HermesTray can only detect busy state from gateway-initiated agents (Telegram, Mattermost, etc.).
+CLI sessions are independent processes and not reflected in the API.
+
+**Idea:** write a plugin that hooks into `pre_llm_call` / `post_llm_call` and pushes status through the Hermes API Server,
+so HermesTray can poll it remotely without any reverse connectivity.
+
+See [issue discussion](https://github.com/jackclub-cn/HermesTray/issues) for proposed approaches.
+
+- [ ] CLI status → API endpoint (plugin writes, API Server serves)
+- [ ] Real-time busy/idle for remote Hermes CLI sessions
+
 ## License
 
 MIT
