@@ -1,5 +1,7 @@
 # HermesTray
 
+🌐 [English](README.md) · [中文](README.zh.md)
+
 🎛️ Cross-platform desktop tray client for [Hermes Agent](https://hermes-agent.nousresearch.com/).
 
 Monitor your Hermes Agent status and chat with it — right from your system tray.
@@ -151,6 +153,10 @@ Config is saved to `~/HermesTray/config.json`.
 ## 中文版
 
 [中文文档](README.zh.md)
+
+## English Version
+
+[English Documentation](README.md)
 
 ## License
 

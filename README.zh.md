@@ -1,5 +1,7 @@
 # HermesTray
 
+🌐 [English](README.md) · [中文](README.zh.md)
+
 🎛️ 跨平台桌面托盘客户端，用于 [Hermes Agent](https://hermes-agent.nousresearch.com/)。
 
 在系统托盘中监控你的 Hermes Agent 状态并与之聊天。
@@ -147,6 +149,10 @@ HermesTray 每隔 N 秒（可配置，默认 3 秒）轮询 `GET /health/detaile
 - **Rust** — 系统托盘、全局快捷键、HTTP 轮询、托盘图标渲染
 - **React + TypeScript** — 聊天界面，中英文国际化
 - **Vite** — 前端打包
+
+## English Version
+
+[English Documentation](README.md)
 
 ## 许可证
 
