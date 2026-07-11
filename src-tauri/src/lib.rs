@@ -7,7 +7,7 @@ use config::Config;
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
-    AppHandle, Emitter, Manager,
+    AppHandle, Emitter, Manager, WindowEvent,
 };
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 
@@ -175,6 +175,14 @@ pub fn run() {
             start_status_poller(app.handle().clone());
 
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            // Intercept close: hide instead of quitting.
+            // Only tray menu "Quit" truly exits.
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
