@@ -1,5 +1,9 @@
 # HermesTray
 
+<p align="center">
+  <img src="screenshots/icon.png" width="128" height="128" alt="HermesTray icon">
+</p>
+
 🌐 [English](README.md) · [中文](README.zh.md)
 
 🎛️ 跨平台桌面托盘客户端，用于 [Hermes Agent](https://hermes-agent.nousresearch.com/)。

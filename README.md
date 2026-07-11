@@ -1,8 +1,12 @@
 # HermesTray
 
+<p align="center">
+  <img src="screenshots/icon.png" width="128" height="128" alt="HermesTray icon">
+</p>
+
 🌐 [English](README.md) · [中文](README.zh.md)
 
-🎛️ Cross-platform desktop tray client for [Hermes Agent](https://hermes-agent.nousresearch.com/).
+Cross-platform desktop tray client for [Hermes Agent](https://hermes-agent.nousresearch.com/).
 
 Monitor your Hermes Agent status and chat with it — right from your system tray.
 
