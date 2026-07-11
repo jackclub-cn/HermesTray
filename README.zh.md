@@ -29,9 +29,9 @@
 
 | 平台 | 安装包 | 说明 |
 |---|---|---|
-| Windows | [下载 .msi](https://github.com/jackclub-cn/HermesTray/releases/latest) | Windows 10+ 64 位 |
-| Windows | [下载 .exe](https://github.com/jackclub-cn/HermesTray/releases/latest) | NSIS 安装程序 |
-| macOS | [下载 .dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Intel/Apple Silicon |
+| Windows | [HermesTray_x64-setup.exe](https://github.com/jackclub-cn/HermesTray/releases/latest) | NSIS 安装程序 |
+| Windows | [HermesTray_x64_en-US.msi](https://github.com/jackclub-cn/HermesTray/releases/latest) | Windows 10+ 64 位 |
+| macOS | [HermesTray_aarch64.dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Apple Silicon |
 
 👉 [所有版本](https://github.com/jackclub-cn/HermesTray/releases)
 

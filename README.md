@@ -29,9 +29,9 @@ Monitor your Hermes Agent status and chat with it — right from your system tra
 
 | Platform | Installer | Notes |
 |---|---|---|
-| Windows | [Download .msi](https://github.com/jackclub-cn/HermesTray/releases/latest) | Windows 10+ 64-bit |
-| Windows | [Download .exe](https://github.com/jackclub-cn/HermesTray/releases/latest) | NSIS installer |
-| macOS | [Download .dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Intel/Apple Silicon |
+| Windows | [HermesTray_x64-setup.exe](https://github.com/jackclub-cn/HermesTray/releases/latest) | NSIS installer |
+| Windows | [HermesTray_x64_en-US.msi](https://github.com/jackclub-cn/HermesTray/releases/latest) | Windows 10+ 64-bit |
+| macOS | [HermesTray_aarch64.dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Apple Silicon |
 
 👉 [All releases](https://github.com/jackclub-cn/HermesTray/releases)
 
