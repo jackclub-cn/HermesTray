@@ -6,6 +6,18 @@
 
 Monitor your Hermes Agent status and chat with it — right from your system tray.
 
+## Download
+
+Latest stable version: **v0.1.0**
+
+| Platform | Installer | Notes |
+|---|---|---|
+| Windows | [HermesTray_0.1.0_x64.msi](https://github.com/jackclub-cn/HermesTray/releases/latest) | Windows 10+ 64-bit |
+| Windows | [HermesTray_0.1.0_x64-setup.exe](https://github.com/jackclub-cn/HermesTray/releases/latest) | NSIS installer |
+| macOS | [HermesTray_0.1.0_x64.dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Intel/Apple Silicon |
+
+👉 [All releases](https://github.com/jackclub-cn/HermesTray/releases)
+
 ## Features
 
 - **System tray icon** — shows H letter on colored circle at a glance:
@@ -39,18 +51,6 @@ Xcode Command Line Tools: `xcode-select --install`
 ### Windows
 
 No additional dependencies — WebView2 is built into Windows 10+.
-
-## Download
-
-Latest stable version: **v0.1.0**
-
-| Platform | Installer | Notes |
-|---|---|---|
-| Windows | [HermesTray_0.1.0_x64.msi](https://github.com/jackclub-cn/HermesTray/releases/latest) | Windows 10+ 64-bit |
-| Windows | [HermesTray_0.1.0_x64-setup.exe](https://github.com/jackclub-cn/HermesTray/releases/latest) | NSIS installer |
-| macOS | [HermesTray_0.1.0_x64.dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Intel/Apple Silicon |
-
-👉 [All releases](https://github.com/jackclub-cn/HermesTray/releases)
 
 ## Build from Source
 

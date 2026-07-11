@@ -6,6 +6,18 @@
 
 在系统托盘中监控你的 Hermes Agent 状态并与之聊天。
 
+## 下载安装
+
+最新稳定版：**v0.1.0**
+
+| 平台 | 安装包 | 说明 |
+|---|---|---|
+| Windows | [HermesTray_0.1.0_x64.msi](https://github.com/jackclub-cn/HermesTray/releases/latest) | Windows 10+ 64 位 |
+| Windows | [HermesTray_0.1.0_x64-setup.exe](https://github.com/jackclub-cn/HermesTray/releases/latest) | NSIS 安装程序 |
+| macOS | [HermesTray_0.1.0_x64.dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Intel/Apple Silicon |
+
+👉 [所有版本](https://github.com/jackclub-cn/HermesTray/releases)
+
 ## 功能特性
 
 - **系统托盘图标** — H 字母 + 状态圆形背景，一目了然：
@@ -39,18 +51,6 @@ sudo apt install libgtk-3-dev libwebkit2gtk-4.1-dev libjavascriptcoregtk-4.1-dev
 ### Windows
 
 无需额外依赖 — WebView2 已内置于 Windows 10+。
-
-## 下载安装
-
-最新稳定版：**v0.1.0**
-
-| 平台 | 安装包 | 说明 |
-|---|---|---|
-| Windows | [HermesTray_0.1.0_x64.msi](https://github.com/jackclub-cn/HermesTray/releases/latest) | Windows 10+ 64 位 |
-| Windows | [HermesTray_0.1.0_x64-setup.exe](https://github.com/jackclub-cn/HermesTray/releases/latest) | NSIS 安装程序 |
-| macOS | [HermesTray_0.1.0_x64.dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Intel/Apple Silicon |
-
-👉 [所有版本](https://github.com/jackclub-cn/HermesTray/releases)
 
 ## 从源码构建
 
