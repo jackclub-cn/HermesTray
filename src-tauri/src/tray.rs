@@ -25,10 +25,10 @@ fn render_icon(bg_r: u8, bg_g: u8, bg_b: u8) -> Image<'static> {
     // ── H glyph (bold, compact, slightly off-center towards top for visual balance) ──
     // Before: h_left=5 h_right=26 h_top=7 h_bot=26  (span 21×19)
     // Now:    compact + bolder
-    let h_left = 8;
-    let h_right = 23;
-    let h_top = 9;
-    let h_bot = 24;
+    let h_left = 6;
+    let h_right = 25;
+    let h_top = 7;
+    let h_bot = 26;
     let h_mid = 16; // crossbar
     let stem_w = 4; // wider stems for bold look
 
