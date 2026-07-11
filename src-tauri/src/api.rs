@@ -61,6 +61,35 @@ impl HermesApi {
         }
     }
 
+    /// Check if a specific session is currently busy (has an active run)
+    pub async fn check_session_busy(
+        &self,
+        base_url: &str,
+        _api_key: &str,
+    ) -> bool {
+        // Try /v1/runs to see if any run is in_progress
+        let url = format!("{}/v1/runs", base_url.trim_end_matches('/'));
+        let req = self.client.get(&url);
+        let req = if !_api_key.is_empty() {
+            req.header("Authorization", format!("Bearer {}", _api_key))
+        } else {
+            req
+        };
+
+        if let Ok(resp) = req.send().await {
+            if resp.status().is_success() {
+                if let Ok(body) = resp.json::<Value>().await {
+                    if let Some(data) = body.get("data").and_then(|v| v.as_array()) {
+                        return data.iter().any(|r| {
+                            r.get("status").and_then(|s| s.as_str()) == Some("in_progress")
+                        });
+                    }
+                }
+            }
+        }
+        false
+    }
+
     /// Send a chat message and return the response text
     pub async fn send_message(
         &self,

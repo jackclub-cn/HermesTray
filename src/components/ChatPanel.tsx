@@ -78,6 +78,8 @@ export function ChatPanel({ lang }: Props) {
       ]);
     } finally {
       setSending(false);
+      // Refocus input after sending
+      setTimeout(() => textareaRef.current?.focus(), 0);
     }
   };
 
