@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -25,16 +26,6 @@ export function ChatPanel() {
     setInput("");
     setSending(true);
 
-    const tauri = window.__TAURI_INTERNALS__;
-    if (!tauri) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Tauri backend not available (running in browser?)", id: `a-${Date.now()}` },
-      ]);
-      setSending(false);
-      return;
-    }
-
     // Add user message
     const userMsg: Message = { role: "user", content: text, id: `u-${Date.now()}` };
     setMessages((prev) => [...prev, userMsg]);
@@ -43,14 +34,14 @@ export function ChatPanel() {
       // Get or create session
       let sid = sessionId;
       if (!sid) {
-        sid = (await tauri.invoke("create_session")) as string;
+        sid = await invoke<string>("create_session");
         setSessionId(sid);
       }
 
-      const response = (await tauri.invoke("send_chat", {
+      const response = await invoke<string>("send_chat", {
         sessionId: sid,
         message: text,
-      })) as string;
+      });
 
       setMessages((prev) => [
         ...prev,

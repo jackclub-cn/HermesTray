@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import "./App.css";
 import { ChatPanel } from "./components/ChatPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -14,16 +16,6 @@ export type ConfigFile = {
   quick_input_hotkey: string;
 };
 
-declare global {
-  interface Window {
-    __TAURI_INTERNALS__?: {
-      invoke: (cmd: string, args?: Record<string, unknown>) => Promise<unknown>;
-      emit: (event: string, payload?: unknown) => Promise<void>;
-      listen: (event: string, handler: (event: { payload: unknown }) => void) => Promise<() => void>;
-    };
-  }
-}
-
 function App() {
   const [tab, setTab] = useState<Tab>("chat");
   const [status, setStatus] = useState<Status>("disconnected");
@@ -35,45 +27,46 @@ function App() {
     quick_input_hotkey: "Ctrl+Alt+Shift+C",
   });
   const [connected, setConnected] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const tauri = window.__TAURI_INTERNALS__;
-    if (!tauri) return;
-
     // Load config from Rust backend
-    tauri.invoke("get_config").then((cfg) => {
-      setConfig(cfg as ConfigFile);
+    invoke<ConfigFile>("get_config")
+      .then((cfg) => {
+        setConfig(cfg);
+        setReady(true);
+      })
+      .catch((e) => {
+        console.error("Failed to load config:", e);
+        setReady(true); // still render UI
+      });
+
+    // Listen for status events from Rust (background polling)
+    const unlistenStatus = listen<{ status: Status }>("hermes-status", (event) => {
+      setStatus(event.payload.status);
+      setConnected(event.payload.status !== "disconnected");
     });
 
-    // Listen for status events from Rust (polling)
-    tauri.listen("hermes-status", (event) => {
-      const payload = event.payload as { status: Status };
-      setStatus(payload.status);
-      setConnected(payload.status !== "disconnected");
-    });
-
-    // Listen for quick-input event
-    const unlisten = tauri.listen("quick-input", () => {
+    // Listen for quick-input event (Ctrl+Alt+Shift+C)
+    const unlistenQuick = listen("quick-input", () => {
       setTab("chat");
     });
 
-    // Listen for navigate event
-    const unlisten2 = tauri.listen("navigate", (event) => {
-      const page = event.payload as string;
-      if (page === "settings") setTab("settings");
+    // Listen for navigate to settings event
+    const unlistenNav = listen<string>("navigate", (event) => {
+      if (event.payload === "settings") setTab("settings");
     });
 
     return () => {
-      unlisten.then((fn) => fn());
-      unlisten2.then((fn) => fn());
+      unlistenStatus.then((fn) => fn());
+      unlistenQuick.then((fn) => fn());
+      unlistenNav.then((fn) => fn());
     };
   }, []);
 
   const handleSaveConfig = useCallback(async (newConfig: ConfigFile) => {
-    const tauri = window.__TAURI_INTERNALS__;
-    if (!tauri) return false;
     try {
-      await tauri.invoke("update_config", { newConfig });
+      await invoke("update_config", { newConfig });
       setConfig(newConfig);
       return true;
     } catch (e) {
@@ -83,15 +76,28 @@ function App() {
   }, []);
 
   const handleTestConnection = useCallback(async () => {
-    const tauri = window.__TAURI_INTERNALS__;
-    if (!tauri) return "Cannot reach backend";
     try {
-      const result = await tauri.invoke("test_connection");
-      return result as string;
+      const result = await invoke<string>("test_connection");
+      return result;
     } catch (e) {
       return String(e);
     }
   }, []);
+
+  if (!ready) {
+    return (
+      <div className="app">
+        <div className="header">
+          <div className={`status-dot disconnected`} />
+          <span className="header-title">HermesTray</span>
+          <span className="header-status">loading...</span>
+        </div>
+        <div className="content" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span className="loading">Connecting to Hermes...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
