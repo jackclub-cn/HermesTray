@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./App.css";
 import { ChatPanel } from "./components/ChatPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -35,7 +35,6 @@ function App() {
     quick_input_hotkey: "Ctrl+Alt+Shift+C",
   });
   const [connected, setConnected] = useState(false);
-  const unlistenRef = useRef<(() => void)[]>([]);
 
   useEffect(() => {
     const tauri = window.__TAURI_INTERNALS__;
