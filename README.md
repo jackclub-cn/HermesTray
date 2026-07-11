@@ -148,6 +148,10 @@ Config is saved to `~/HermesTray/config.json`.
 - **React + TypeScript** — chat UI with Chinese/English i18n
 - **Vite** — frontend bundling
 
+## 中文版
+
+[中文文档](README.zh.md)
+
 ## License
 
 MIT
