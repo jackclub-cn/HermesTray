@@ -175,20 +175,7 @@ function App() {
 
       {/* Content */}
       <div className="content">
-        {tab === "chat" && <ChatPanel lang={lang} onBusyChange={(b) => {
-          // ChatPanel self-reports busy state; combine with API connectivity
-          if (b) {
-            setStatus("busy");
-            setConnected(true);
-          } else {
-            // Restore to whatever the last poll said
-            invoke<string>("get_status").then(r => {
-              const s = JSON.parse(r) as Status;
-              setStatus(s);
-              setConnected(s !== "disconnected");
-            }).catch(() => {});
-          }
-        }} />}
+        {tab === "chat" && <ChatPanel lang={lang} />}
         {tab === "settings" && (
           <SettingsPanel
             config={config}
