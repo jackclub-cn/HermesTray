@@ -27,13 +27,11 @@
 
 ## 下载安装
 
-最新稳定版：**v0.1.0**
-
 | 平台 | 安装包 | 说明 |
 |---|---|---|
-| Windows | [HermesTray_0.1.0_x64.msi](https://github.com/jackclub-cn/HermesTray/releases/latest) | Windows 10+ 64 位 |
-| Windows | [HermesTray_0.1.0_x64-setup.exe](https://github.com/jackclub-cn/HermesTray/releases/latest) | NSIS 安装程序 |
-| macOS | [HermesTray_0.1.0_x64.dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Intel/Apple Silicon |
+| Windows | [下载 .msi](https://github.com/jackclub-cn/HermesTray/releases/latest) | Windows 10+ 64 位 |
+| Windows | [下载 .exe](https://github.com/jackclub-cn/HermesTray/releases/latest) | NSIS 安装程序 |
+| macOS | [下载 .dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Intel/Apple Silicon |
 
 👉 [所有版本](https://github.com/jackclub-cn/HermesTray/releases)
 
