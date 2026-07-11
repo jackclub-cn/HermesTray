@@ -149,7 +149,7 @@ html, body, #root {
 
 .chat-input-bar {
   position: relative;
-  padding: 8px 12px;
+  padding: 8px 12px 32px 12px; /* bottom room for buttons */
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
 }
@@ -158,7 +158,7 @@ html, body, #root {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 8px 12px;
-  padding-right: 100px;
+  padding-right: 96px;
   background: var(--bg-tertiary);
   color: var(--text-primary);
   font-size: 13px;
@@ -181,7 +181,7 @@ html, body, #root {
 
 .chat-actions {
   position: absolute;
-  bottom: 12px;
+  bottom: 6px;
   right: 16px;
   display: flex;
   gap: 4px;
@@ -189,6 +189,9 @@ html, body, #root {
 }
 .btn-send,
 .btn-new {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   border-radius: var(--radius);
   font-size: 13px;
@@ -196,7 +199,7 @@ html, body, #root {
   font-weight: 500;
   font-family: inherit;
   height: 28px;
-  padding: 0 12px;
+  padding: 0 12px !important;
   white-space: nowrap;
 }
 .btn-send {
