@@ -27,7 +27,8 @@ impl Default for ConfigFile {
 
 impl ConfigFile {
     fn path() -> PathBuf {
-        let dir = dirs::config_dir()
+        // Save to ~/HermesTray/config.json (user home, not buried in AppData)
+        let dir = dirs::home_dir()
             .unwrap_or_else(|| PathBuf::from("."))
             .join("HermesTray");
         dir.join("config.json")

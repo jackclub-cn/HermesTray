@@ -95,14 +95,17 @@ impl HermesApi {
             return Err(format!("HTTP {}: {}", status.as_u16(), text));
         }
 
-        // Try to parse as JSON; if it has a "response" or "content" field, extract it
+        // Parse Hermes response: {"message": {"content": "..."}}
         if let Ok(json) = serde_json::from_str::<Value>(&text) {
-            if let Some(content) = json.get("response").and_then(|v| v.as_str()) {
+            // Hermes session chat: message.content
+            if let Some(content) = json
+                .get("message")
+                .and_then(|m| m.get("content"))
+                .and_then(|c| c.as_str())
+            {
                 return Ok(content.to_string());
             }
-            if let Some(content) = json.get("content").and_then(|v| v.as_str()) {
-                return Ok(content.to_string());
-            }
+            // OpenAI-style: choices[0].message.content
             if let Some(content) = json
                 .get("choices")
                 .and_then(|v| v.as_array())
@@ -113,8 +116,19 @@ impl HermesApi {
             {
                 return Ok(content.to_string());
             }
-            // If JSON but no known field, return pretty-printed
-            return Ok(serde_json::to_string_pretty(&json).unwrap_or(text));
+            // OpenAI-style delta: choices[0].delta.content
+            if let Some(content) = json
+                .get("choices")
+                .and_then(|v| v.as_array())
+                .and_then(|arr| arr.first())
+                .and_then(|c| c.get("delta"))
+                .and_then(|d| d.get("content"))
+                .and_then(|c| c.as_str())
+            {
+                return Ok(content.to_string());
+            }
+            // Fall back to raw text
+            return Ok(text);
         }
 
         // Plain text response
@@ -124,7 +138,7 @@ impl HermesApi {
     /// Create a new session
     pub async fn create_session(&self, base_url: &str, api_key: &str) -> Result<String, String> {
         let url = format!("{}/api/sessions", base_url.trim_end_matches('/'));
-        let req = self.client.post(&url);
+        let req = self.client.post(&url).json(&serde_json::json!({}));
         let req = if !api_key.is_empty() {
             req.header("Authorization", format!("Bearer {}", api_key))
         } else {
@@ -132,11 +146,19 @@ impl HermesApi {
         };
 
         let resp = req.send().await.map_err(|e| format!("Session create failed: {}", e))?;
+        let status = resp.status();
         let body: Value = resp.json().await.map_err(|e| format!("JSON parse failed: {}", e))?;
-        body.get("id")
+
+        if !status.is_success() {
+            return Err(format!("HTTP {}: {}", status.as_u16(), body));
+        }
+
+        // Response shape: {"session": {"id": "api_xxx"}}
+        body.get("session")
+            .and_then(|s| s.get("id"))
             .and_then(|v| v.as_str())
             .map(|s| s.to_string())
-            .ok_or_else(|| "No session id in response".to_string())
+            .ok_or_else(|| format!("No session id in response: {}", body))
     }
 
     /// List sessions
