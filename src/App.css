@@ -148,17 +148,17 @@ html, body, #root {
 }
 
 .chat-input-bar {
-  display: flex;
-  gap: 8px;
+  position: relative;
   padding: 8px 12px;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
 }
 .chat-input {
-  flex: 1;
+  width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 8px 12px;
+  padding-right: 100px;
   background: var(--bg-tertiary);
   color: var(--text-primary);
   font-size: 13px;
@@ -168,7 +168,7 @@ html, body, #root {
   font-family: inherit;
   overflow-y: auto;
   min-height: 36px;
-  max-height: 90px; /* ~3 lines */
+  max-height: 90px;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
@@ -178,6 +178,40 @@ html, body, #root {
 .chat-input::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 .chat-input:focus { border-color: var(--accent); }
 .chat-input::placeholder { color: var(--text-secondary); }
+
+.chat-actions {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.btn-send,
+.btn-new {
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: inherit;
+  height: 28px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+.btn-send {
+  background: var(--accent);
+  color: white;
+}
+.btn-send:hover { background: var(--accent-hover); }
+.btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-new {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 0 8px;
+}
+.btn-new:hover { color: var(--text-primary); border-color: var(--text-secondary); }
 
 .btn {
   border: none;
@@ -284,4 +318,3 @@ html, body, #root {
   color: var(--text-primary);
   border-color: var(--accent);
 }
-
