@@ -17,10 +17,8 @@
         "height": 660,
         "visible": false,
         "decorations": true,
-        "resizable": true,
-        "center": true,
-        "minWidth": 360,
-        "minHeight": 480
+        "resizable": false,
+        "center": true
       }
     ],
     "security": {
