@@ -11,52 +11,57 @@ struct TrayIcons {
 
 static TRAY_ICONS: OnceLock<TrayIcons> = OnceLock::new();
 
-/// Render a 32×32 tray icon: "H" letter on a colored circular background
+/// Render a 32×32 tray icon: bold "H" on colored circular background, clean & minimal
 fn render_icon(bg_r: u8, bg_g: u8, bg_b: u8) -> Image<'static> {
-    let size: i32 = 32;
-    let w = size as usize;
+    const SZ: i32 = 32;
+    let w = SZ as usize;
     let mut pixels = Vec::with_capacity(w * w * 4);
 
-    // Bounding box for the H letter — wider than before
-    let h_left = 5;
-    let h_right = 26;
-    let h_top = 7;
-    let h_bot = 26;
+    // ── Circle background ──
+    let cc = 15.5f64;
+    let bg_r2 = 14.5f64.powi(2); // radius² for fast inner check
+    let bg_aa = 1.2f64; // anti-alias band
+
+    // ── H glyph (bold, compact, slightly off-center towards top for visual balance) ──
+    // Before: h_left=5 h_right=26 h_top=7 h_bot=26  (span 21×19)
+    // Now:    compact + bolder
+    let h_left = 8;
+    let h_right = 23;
+    let h_top = 9;
+    let h_bot = 24;
     let h_mid = 16; // crossbar
+    let stem_w = 4; // wider stems for bold look
 
-    // Circle background — centered
-    let cc = 15.5; // center (15,15) with anti-aliasing
-    let bg_radius = 15.0;
-    let aa = 1.2;
-
-    for y in 0..size {
-        for x in 0..size {
+    for y in 0..SZ {
+        for x in 0..SZ {
             let (mut px_r, mut px_g, mut px_b, mut alpha) = (0u8, 0u8, 0u8, 0u8);
 
-            // ── Circular background ──
-            let dx = (x as f64 - cc).powi(2);
-            let dy = (y as f64 - cc).powi(2);
-            let dist = (dx + dy).sqrt();
-
-            if dist < bg_radius {
+            // ── Background circle ──
+            let d2 = (x as f64 - cc).powi(2) + (y as f64 - cc).powi(2);
+            if d2 <= bg_r2 {
+                // Inside solid circle
                 alpha = 255;
                 (px_r, px_g, px_b) = (bg_r, bg_g, bg_b);
-            } else if dist < bg_radius + aa {
-                let t = (dist - bg_radius) / aa;
-                let a = ((1.0 - t) * 255.0) as u8;
-                alpha = a;
-                (px_r, px_g, px_b) = (bg_r, bg_g, bg_b);
+            } else {
+                let dist = d2.sqrt();
+                if dist < cc + bg_aa {
+                    // AA border
+                    let t = (dist - (bg_r2.sqrt())) / bg_aa;
+                    let a = ((1.0 - t).clamp(0.0, 1.0) * 255.0) as u8;
+                    alpha = a;
+                    (px_r, px_g, px_b) = (bg_r, bg_g, bg_b);
+                }
+                // else fully transparent
             }
 
-            // ── H letter (white, overlay on background) ──
-            let stem_w = 3; // width of each vertical stem
+            // ── H glyph (white, bold) ──
             let in_left = x >= h_left && x <= h_left + stem_w;
             let in_right = x >= h_right - stem_w && x <= h_right;
-            let in_cross = y >= h_mid - 1 && y <= h_mid + 1 && x >= h_left && x <= h_right;
+            let in_cross = y >= h_mid - 2 && y <= h_mid + 2 && x >= h_left && x <= h_right;
 
             if (in_left || in_right || in_cross) && y >= h_top && y <= h_bot {
                 (px_r, px_g, px_b) = (255, 255, 255);
-                alpha = 255; // solid white letter, no AA needed
+                alpha = 255;
             }
 
             pixels.push(px_r);
@@ -67,7 +72,7 @@ fn render_icon(bg_r: u8, bg_g: u8, bg_b: u8) -> Image<'static> {
     }
 
     let static_pixels: &'static [u8] = Box::leak(pixels.into_boxed_slice());
-    Image::new(static_pixels, size as u32, size as u32)
+    Image::new(static_pixels, SZ as u32, SZ as u32)
 }
 
 fn get_icons() -> &'static TrayIcons {
@@ -78,7 +83,6 @@ fn get_icons() -> &'static TrayIcons {
     })
 }
 
-/// Get a cached tray icon for the given status
 pub fn make_tray_icon(r: u8, g: u8, b: u8) -> Image<'static> {
     let icons = get_icons();
     if r == 160 && g == 160 && b == 160 {
@@ -92,7 +96,6 @@ pub fn make_tray_icon(r: u8, g: u8, b: u8) -> Image<'static> {
     }
 }
 
-/// Update the tray icon and tooltip based on connection status
 pub fn update_tray(app: &tauri::AppHandle, status: &ConnectionStatus) {
     let (icon, label) = match status {
         ConnectionStatus::Disconnected => (&get_icons().disconnected, "HermesTray — disconnected"),
