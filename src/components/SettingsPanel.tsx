@@ -41,6 +41,19 @@ export function SettingsPanel({ config, onSave, onTest, connected, status }: Pro
 
   const handleTest = async () => {
     setTestResult(null);
+    // Save first, then test with the new values
+    const newCfg: ConfigFile = {
+      api_url: apiUrl,
+      api_key: apiKey,
+      poll_interval_secs: pollInterval,
+      toggle_hotkey: toggleHotkey,
+      quick_input_hotkey: "Ctrl+Alt+Shift+C",
+    };
+    const saved = await onSave(newCfg);
+    if (!saved) {
+      setTestResult({ ok: false, msg: "Failed to save settings before testing" });
+      return;
+    }
     const result = await onTest();
     try {
       const parsed = JSON.parse(result);

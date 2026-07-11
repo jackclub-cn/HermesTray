@@ -20,7 +20,7 @@ fn start_status_poller(app: AppHandle) {
         loop {
             let (base_url, api_key, interval) = {
                 let cfg = app.state::<Config>();
-                let file = cfg.file.lock().unwrap();
+                let file = cfg.file.lock().unwrap_or_else(|e| e.into_inner());
                 (
                     file.api_url.clone(),
                     file.api_key.clone(),
@@ -157,8 +157,16 @@ pub fn run() {
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
-                    if let tauri::tray::TrayIconEvent::DoubleClick { .. } = event {
-                        let app = tray.app_handle();
+                    let app = tray.app_handle();
+                    let should_toggle = match event {
+                        tauri::tray::TrayIconEvent::DoubleClick { .. } => true,
+                        tauri::tray::TrayIconEvent::Click { button, button_state, .. } => {
+                            button == tauri::tray::MouseButton::Left
+                                && button_state == tauri::tray::MouseButtonState::Up
+                        }
+                        _ => false,
+                    };
+                    if should_toggle {
                         if let Some(win) = app.get_webview_window("main") {
                             if win.is_visible().unwrap_or(false) {
                                 let _ = win.hide();
@@ -173,6 +181,20 @@ pub fn run() {
 
             // Start background status polling
             start_status_poller(app.handle().clone());
+
+            // Register global shortcuts from config
+            let gs = app.global_shortcut();
+            let toggle_key = app.state::<Config>().file.lock().unwrap().toggle_hotkey.clone();
+            if !toggle_key.is_empty() {
+                if let Ok(shortcut) = Shortcut::try_from(toggle_key.as_str()) {
+                    let _ = gs.register(shortcut);
+                }
+            }
+            // Register quick-input shortcut (fixed for now)
+            let _ = gs.register(Shortcut::new(
+                Some(Modifiers::CONTROL | Modifiers::ALT | Modifiers::SHIFT),
+                Code::KeyC,
+            ));
 
             Ok(())
         })
