@@ -2,7 +2,7 @@ use crate::api::ConnectionStatus;
 use std::sync::OnceLock;
 use tauri::image::Image;
 
-/// Pre-rendered tray icons (only 3 possible colors, cached forever)
+/// Pre-rendered tray icons — cached once, reused forever
 struct TrayIcons {
     disconnected: Image<'static>,
     idle: Image<'static>,
@@ -11,36 +11,64 @@ struct TrayIcons {
 
 static TRAY_ICONS: OnceLock<TrayIcons> = OnceLock::new();
 
-fn render_icon(r: u8, g: u8, b: u8) -> Image<'static> {
+/// Render a 32×32 tray icon: "H" letter + status dot at bottom-right
+fn render_icon(dot_r: u8, dot_g: u8, dot_b: u8) -> Image<'static> {
     let size: u32 = 32;
-    let usize_sz = size as usize;
-    let mut pixels = Vec::with_capacity(usize_sz * usize_sz * 4);
-    for y in 0..size {
-        for x in 0..size {
-            let cx = 16i32;
-            let cy = 16i32;
-            let dx = (x as i32 - cx).abs();
-            let dy = (y as i32 - cy).abs();
+    let w = size as i32;
+    let mut pixels = Vec::with_capacity((w * w * 4) as usize);
+
+    // "H" bitmap — 6px wide, 18px tall, centered
+    let h_left = 9;
+    let h_right = h_left + 5;
+    let h_top = 8;
+    let h_bot = 27;
+    let h_mid = 17; // crossbar
+
+    // Dot position (bottom-right corner)
+    let d_cx = 24;
+    let d_cy = 24;
+    let d_radius = 5;
+
+    for y in 0..w {
+        for x in 0..w {
+            let (mut px_r, mut px_g, mut px_b, mut alpha) = (0u8, 0u8, 0u8, 0u8);
+
+            // ── H letter (white) ──
+            let in_left = x >= h_left && x <= h_left + 2; // left stem
+            let in_right = (x >= h_right - 2 && x <= h_right) || (x >= h_right - 1 && x <= h_right + 1); // right stem
+            let in_cross = y >= h_mid - 1 && y <= h_mid + 1 && x >= h_left && x <= h_right;
+
+            if (in_left || in_right || in_cross) && y >= h_top && y <= h_bot {
+                (px_r, px_g, px_b) = (255, 255, 255);
+                alpha = 255;
+            }
+
+            // ── Status dot (colored) ──
+            let dx = (x - d_cx).abs();
+            let dy = (y - d_cy).abs();
             let dist = ((dx * dx + dy * dy) as f64).sqrt();
-            let radius = 13.0f64;
-            let aa = 1.5f64;
-            let alpha = if dist < radius {
-                255u8
-            } else if dist < radius + aa {
-                let t = (dist - radius) / aa;
-                ((1.0 - t) * 255.0) as u8
-            } else {
-                0u8
-            };
-            pixels.push(r);
-            pixels.push(g);
-            pixels.push(b);
+            if dist < d_radius as f64 {
+                (px_r, px_g, px_b) = (dot_r, dot_g, dot_b);
+                alpha = 255;
+            } else if dist < d_radius as f64 + 1.0 {
+                // anti-alias edge
+                let t = (dist - d_radius as f64);
+                let a = ((1.0 - t) * 255.0) as u8;
+                if a > alpha {
+                    (px_r, px_g, px_b) = (dot_r, dot_g, dot_b);
+                    alpha = a;
+                }
+            }
+
+            pixels.push(px_r);
+            pixels.push(px_g);
+            pixels.push(px_b);
             pixels.push(alpha);
         }
     }
-    // Leak once — only 3 images total, ~4KB each, lives for app lifetime
+
     let static_pixels: &'static [u8] = Box::leak(pixels.into_boxed_slice());
-    Image::new(static_pixels, size, size)
+    Image::new(static_pixels, size as u32, size as u32)
 }
 
 fn get_icons() -> &'static TrayIcons {
@@ -51,9 +79,9 @@ fn get_icons() -> &'static TrayIcons {
     })
 }
 
-/// Get a cached tray icon for the given status
+/// Get a cached tray icon for the given status.
+/// Also serves as the init icon (gray dot).
 pub fn make_tray_icon(r: u8, g: u8, b: u8) -> Image<'static> {
-    // Used only for the initial gray icon at startup
     let icons = get_icons();
     if r == 160 && g == 160 && b == 160 {
         icons.disconnected.clone()
