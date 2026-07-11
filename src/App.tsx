@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
+import { i18n, type Lang, type TKey } from "./i18n";
 import { ChatPanel } from "./components/ChatPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 
@@ -12,8 +13,10 @@ export type ConfigFile = {
   api_url: string;
   api_key: string;
   poll_interval_secs: number;
+  poll_interval_secs_f64?: number;
   toggle_hotkey: string;
   quick_input_hotkey: string;
+  language: string;
 };
 
 function App() {
@@ -25,21 +28,40 @@ function App() {
     poll_interval_secs: 3,
     toggle_hotkey: "Alt+Space",
     quick_input_hotkey: "Ctrl+Alt+Shift+C",
+    language: "en",
   });
   const [connected, setConnected] = useState(false);
   const [ready, setReady] = useState(false);
+  const [lang, setLang] = useState<Lang>("en");
+
+  const t = (key: TKey) => i18n[lang][key] || i18n.en[key] || key;
+
+  // Apply config → set language
+  const applyConfig = (cfg: ConfigFile) => {
+    setConfig(cfg);
+    setLang((cfg.language === "zh" ? "zh" : "en") as Lang);
+  };
 
   useEffect(() => {
     // Load config from Rust backend
     invoke<ConfigFile>("get_config")
       .then((cfg) => {
-        setConfig(cfg);
+        applyConfig(cfg);
         setReady(true);
       })
       .catch((e) => {
         console.error("Failed to load config:", e);
-        setReady(true); // still render UI
+        setReady(true);
       });
+
+    // Query current status immediately (don't wait for first status-change event)
+    invoke<string>("get_status")
+      .then((result) => {
+        const parsed = JSON.parse(result) as Status;
+        setStatus(parsed);
+        setConnected(parsed !== "disconnected");
+      })
+      .catch((e) => console.error("Failed to get initial status:", e));
 
     // Listen for status events from Rust (background polling)
     const unlistenStatus = listen<{ status: Status }>("hermes-status", (event) => {
@@ -67,7 +89,7 @@ function App() {
   const handleSaveConfig = useCallback(async (newConfig: ConfigFile) => {
     try {
       await invoke("update_config", { newConfig });
-      setConfig(newConfig);
+      applyConfig(newConfig);
       return true;
     } catch (e) {
       console.error("Failed to save config", e);
@@ -84,6 +106,11 @@ function App() {
     }
   }, []);
 
+  const setStatusDotClass = (s: Status) => {
+    if (s === "idle") return "connected";
+    return s;
+  };
+
   if (!ready) {
     return (
       <div className="app">
@@ -99,13 +126,35 @@ function App() {
     );
   }
 
+  const statusText = (s: Status) => {
+    const map: Record<Status, TKey> = {
+      disconnected: "status_disconnected",
+      idle: "status_idle",
+      busy: "status_busy",
+    };
+    return t(map[s]);
+  };
+
   return (
     <div className="app">
       {/* Header with status */}
       <div className="header">
-        <div className={`status-dot ${status}`} />
+        <div className={`status-dot ${setStatusDotClass(status)}`} />
         <span className="header-title">HermesTray</span>
-        <span className="header-status">{status}</span>
+        <span className="header-status">{statusText(status)}</span>
+        {/* Language toggle */}
+        <button
+          className="lang-toggle"
+          onClick={() => {
+            const newLang: Lang = lang === "en" ? "zh" : "en";
+            const newCfg = { ...config, language: newLang };
+            invoke("update_config", { newConfig: newCfg }).catch(() => {});
+            setLang(newLang);
+          }}
+          title={lang === "en" ? "切换到中文" : "Switch to English"}
+        >
+          {lang === "en" ? "中" : "EN"}
+        </button>
       </div>
 
       {/* Tab bar */}
@@ -114,19 +163,19 @@ function App() {
           className={`tab ${tab === "chat" ? "active" : ""}`}
           onClick={() => setTab("chat")}
         >
-          Chat
+          {t("tab_chat")}
         </div>
         <div
           className={`tab ${tab === "settings" ? "active" : ""}`}
           onClick={() => setTab("settings")}
         >
-          Settings
+          {t("tab_settings")}
         </div>
       </div>
 
       {/* Content */}
       <div className="content">
-        {tab === "chat" && <ChatPanel />}
+        {tab === "chat" && <ChatPanel lang={lang} />}
         {tab === "settings" && (
           <SettingsPanel
             config={config}
@@ -134,6 +183,7 @@ function App() {
             onTest={handleTestConnection}
             connected={connected}
             status={status}
+            lang={lang}
           />
         )}
       </div>

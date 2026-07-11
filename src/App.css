@@ -260,3 +260,20 @@ html, body, #root {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
+.lang-toggle {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.lang-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+

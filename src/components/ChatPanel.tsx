@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { i18n, type Lang, type TKey } from "../i18n";
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -7,9 +8,15 @@ interface Message {
   id: string;
 }
 
-export function ChatPanel() {
+interface Props {
+  lang: Lang;
+}
+
+export function ChatPanel({ lang }: Props) {
+  const t = (key: TKey) => i18n[lang][key] || i18n.en[key] || key;
+
   const [messages, setMessages] = useState<Message[]>([
-    { role: "system", content: "Press Enter to send, Shift+Enter for newline.", id: "sys-0" },
+    { role: "system", content: t("chat_hint"), id: "sys-0" },
   ]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -26,12 +33,10 @@ export function ChatPanel() {
     setInput("");
     setSending(true);
 
-    // Add user message
     const userMsg: Message = { role: "user", content: text, id: `u-${Date.now()}` };
     setMessages((prev) => [...prev, userMsg]);
 
     try {
-      // Get or create session
       let sid = sessionId;
       if (!sid) {
         sid = await invoke<string>("create_session");
@@ -50,7 +55,7 @@ export function ChatPanel() {
     } catch (e) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: `Error: ${e}`, id: `e-${Date.now()}` },
+        { role: "assistant", content: `${t("chat_error")}: ${e}`, id: `e-${Date.now()}` },
       ]);
     } finally {
       setSending(false);
@@ -67,7 +72,7 @@ export function ChatPanel() {
   const newSession = async () => {
     setSessionId(null);
     setMessages([
-      { role: "system", content: "New session started. Press Enter to send.", id: `sys-${Date.now()}` },
+      { role: "system", content: t("chat_new_session_started"), id: `sys-${Date.now()}` },
     ]);
   };
 
@@ -79,7 +84,7 @@ export function ChatPanel() {
             {msg.content}
           </div>
         ))}
-        {sending && <div className="message assistant loading">Thinking...</div>}
+        {sending && <div className="message assistant loading">{t("chat_thinking")}</div>}
         <div ref={messagesEndRef} />
       </div>
       <div className="chat-input-bar">
@@ -88,15 +93,15 @@ export function ChatPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          placeholder={t("chat_placeholder")}
           rows={1}
           disabled={sending}
         />
-        <button className="btn btn-primary" onClick={newSession} title="New session" style={{ padding: "8px 10px" }}>
-          ✕
+        <button className="btn btn-primary" onClick={newSession} title={t("chat_new_session")} style={{ padding: "8px 10px" }}>
+          +
         </button>
         <button className="btn btn-primary" onClick={sendMessage} disabled={!input.trim() || sending}>
-          Send
+          {t("chat_send")}
         </button>
       </div>
     </>
