@@ -175,8 +175,10 @@ function App() {
 
       {/* Content */}
       <div className="content">
-        {tab === "chat" && <ChatPanel lang={lang} />}
-        {tab === "settings" && (
+        <div style={{ display: tab === "chat" ? "flex" : "none", flex: 1, overflow: "hidden", flexDirection: "column" }}>
+          <ChatPanel lang={lang} />
+        </div>
+        <div style={{ display: tab === "settings" ? "block" : "none", flex: 1, overflow: "auto" }}>
           <SettingsPanel
             config={config}
             onSave={handleSaveConfig}
@@ -185,7 +187,7 @@ function App() {
             status={status}
             lang={lang}
           />
-        )}
+        </div>
       </div>
     </div>
   );
