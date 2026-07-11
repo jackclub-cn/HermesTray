@@ -10,9 +10,10 @@ interface Message {
 
 interface Props {
   lang: Lang;
+  onBusyChange: (busy: boolean) => void;
 }
 
-export function ChatPanel({ lang }: Props) {
+export function ChatPanel({ lang, onBusyChange }: Props) {
   const t = (key: TKey) => i18n[lang][key] || i18n.en[key] || key;
 
   const [messages, setMessages] = useState<Message[]>([
@@ -50,6 +51,7 @@ export function ChatPanel({ lang }: Props) {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
+    onBusyChange(true);
     setSending(true);
 
     const userMsg: Message = { role: "user", content: text, id: `u-${Date.now()}` };
@@ -78,6 +80,7 @@ export function ChatPanel({ lang }: Props) {
       ]);
     } finally {
       setSending(false);
+      onBusyChange(false);
       // Refocus input after sending
       setTimeout(() => textareaRef.current?.focus(), 0);
     }
