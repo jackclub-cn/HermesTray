@@ -16,6 +16,7 @@ export type ConfigFile = {
   poll_interval_secs_f64?: number;
   toggle_hotkey: string;
   quick_input_hotkey: string;
+  autostart: boolean;
   language: string;
 };
 
@@ -28,6 +29,7 @@ function App() {
     poll_interval_secs: 3,
     toggle_hotkey: "Alt+Space",
     quick_input_hotkey: "Ctrl+Alt+Shift+C",
+    autostart: false,
     language: "en",
   });
   const [connected, setConnected] = useState(false);

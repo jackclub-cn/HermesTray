@@ -19,6 +19,7 @@ export function SettingsPanel({ config, onSave, onTest, connected, status, lang 
   const [pollInterval, setPollInterval] = useState(config.poll_interval_secs);
   const [toggleHotkey, setToggleHotkey] = useState(config.toggle_hotkey);
   const [language, setLanguage] = useState(config.language || "en");
+  const [autostart, setAutostart] = useState(config.autostart);
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -28,6 +29,7 @@ export function SettingsPanel({ config, onSave, onTest, connected, status, lang 
     setPollInterval(config.poll_interval_secs);
     setToggleHotkey(config.toggle_hotkey);
     setLanguage(config.language || "en");
+    setAutostart(config.autostart);
   }, [config]);
 
   const handleSave = async () => {
@@ -37,6 +39,7 @@ export function SettingsPanel({ config, onSave, onTest, connected, status, lang 
       poll_interval_secs: pollInterval,
       toggle_hotkey: toggleHotkey,
       quick_input_hotkey: "Ctrl+Alt+Shift+C",
+      autostart,
       language,
     };
     const ok = await onSave(newCfg);
@@ -55,6 +58,7 @@ export function SettingsPanel({ config, onSave, onTest, connected, status, lang 
       poll_interval_secs: pollInterval,
       toggle_hotkey: toggleHotkey,
       quick_input_hotkey: "Ctrl+Alt+Shift+C",
+      autostart,
       language,
     };
     const savedOk = await onSave(newCfg);
@@ -134,6 +138,21 @@ export function SettingsPanel({ config, onSave, onTest, connected, status, lang 
 
       <div className="settings-hint" style={{ margin: "4px 0" }}>
         {t("settings_quick_input")}: <strong>{t("settings_quick_input_fixed")}</strong>
+      </div>
+
+      <div className="settings-section">{t("settings_language")}</div>
+      <div className="settings-group">
+        <label htmlFor="autostart" style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+          <input
+            id="autostart"
+            type="checkbox"
+            checked={autostart}
+            onChange={(e) => setAutostart(e.target.checked)}
+            style={{ accentColor: "var(--accent)" }}
+          />
+          {t("settings_autostart")}
+        </label>
+        <span className="settings-hint">{t("settings_autostart_hint")}</span>
       </div>
 
       <div className="settings-section">{t("settings_language")}</div>

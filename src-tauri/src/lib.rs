@@ -9,6 +9,7 @@ use tauri::{
     tray::TrayIconBuilder,
     AppHandle, Emitter, Manager, WindowEvent,
 };
+use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 /// Start background polling of Hermes API status
@@ -59,6 +60,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, shortcut, event| {
@@ -182,6 +184,17 @@ pub fn run() {
                 })
                 .build(app)?;
 
+            // Apply auto-start from saved config
+            {
+                let cfg = app.state::<Config>();
+                let file = cfg.file.lock().unwrap();
+                if file.autostart {
+                    let _ = app.autolaunch().enable();
+                } else {
+                    let _ = app.autolaunch().disable();
+                }
+            }
+
             // Start background status polling
             start_status_poller(app.handle().clone());
 
@@ -230,11 +243,26 @@ fn update_config(
     let gs = app.global_shortcut();
     let _ = gs.unregister_all();
 
+    let old_autostart = {
+        let file = config.file.lock().map_err(|e| e.to_string())?;
+        file.autostart
+    };
+
     {
         let mut file = config.file.lock().map_err(|e| e.to_string())?;
         *file = new_config;
     }
     config.save()?;
+
+    // Apply auto-start change
+    let new_autostart = config.file.lock().unwrap().autostart;
+    if new_autostart != old_autostart {
+        if new_autostart {
+            let _ = app.autolaunch().enable();
+        } else {
+            let _ = app.autolaunch().disable();
+        }
+    }
 
     // Re-register shortcuts with new config
     let gs = app.global_shortcut();

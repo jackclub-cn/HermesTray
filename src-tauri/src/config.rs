@@ -11,6 +11,7 @@ pub struct ConfigFile {
     pub poll_interval_secs: u64,
     pub toggle_hotkey: String,
     pub quick_input_hotkey: String,
+    pub autostart: bool,
     #[serde(default = "default_language")]
     pub language: String,
 }
@@ -27,6 +28,7 @@ impl Default for ConfigFile {
             poll_interval_secs: 3,
             toggle_hotkey: "Alt+Space".into(),
             quick_input_hotkey: "Ctrl+Alt+Shift+C".into(),
+            autostart: false,
             language: "en".into(),
         }
     }
