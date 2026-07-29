@@ -76,10 +76,19 @@ impl HermesApi {
             session_id
         );
 
-        let body = serde_json::json!({
-            "message": message,
-            "stream": false,
-        });
+        // If message is a JSON array or object (multimodal content), use it directly
+        // otherwise use it as a plain text message.
+        let body = if let Ok(json_value) = serde_json::from_str::<Value>(message) {
+            serde_json::json!({
+                "message": json_value,
+                "stream": false,
+            })
+        } else {
+            serde_json::json!({
+                "message": message,
+                "stream": false,
+            })
+        };
 
         let req = self.client.post(&url).json(&body);
         let req = if !api_key.is_empty() {

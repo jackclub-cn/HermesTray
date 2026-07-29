@@ -24,6 +24,32 @@ html, body, #root {
   overflow: hidden;
 }
 
+/* ── Custom Scrollbar (global) ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox thin scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -103,9 +129,6 @@ html, body, #root {
   flex-direction: column;
   gap: 8px;
 }
-.chat-messages::-webkit-scrollbar { width: 6px; }
-.chat-messages::-webkit-scrollbar-track { background: transparent; }
-.chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 .message {
   padding: 8px 12px;
@@ -115,6 +138,29 @@ html, body, #root {
   line-height: 1.5;
   font-size: 13px;
   white-space: pre-wrap;
+}
+.message-text {
+  white-space: pre-wrap;
+}
+
+/* ── Inline Images in Messages ── */
+.message-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.message-image {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  cursor: zoom-in;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.2);
+}
+.message.user .message-image {
+  border-color: rgba(255, 255, 255, 0.15);
 }
 .message.user {
   background: var(--accent);
@@ -149,9 +195,55 @@ html, body, #root {
 
 .chat-input-bar {
   position: relative;
-  padding: 8px 12px 32px 12px; /* bottom room for buttons */
+  padding: 10px 12px 40px 12px;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
+}
+
+/* ── Image Previews in Input ── */
+.chat-images-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 0 8px 0;
+}
+.chat-image-preview {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.chat-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.chat-image-remove {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.chat-image-remove:hover {
+  background: rgba(255, 50, 50, 0.8);
 }
 .chat-input {
   width: 100%;
@@ -167,22 +259,27 @@ html, body, #root {
   resize: none;
   font-family: inherit;
   overflow-y: auto;
-  min-height: 36px;
+  min-height: 54px;
   max-height: 90px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
 }
-.chat-input::-webkit-scrollbar { width: 4px; }
-.chat-input::-webkit-scrollbar-track { background: transparent; }
-.chat-input::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-.chat-input::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 .chat-input:focus { border-color: var(--accent); }
 .chat-input::placeholder { color: var(--text-secondary); }
 
 .chat-actions {
   position: absolute;
   bottom: 6px;
+  left: 12px;
   right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.chat-actions-left {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.chat-actions-right {
   display: flex;
   gap: 4px;
   align-items: center;
@@ -226,6 +323,22 @@ html, body, #root {
   font-weight: 500;
   font-family: inherit;
 }
+.btn-attach {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  line-height: 1;
+  font-size: 15px;
+}
+.btn-attach:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+.btn-attach:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .btn-primary {
   background: var(--accent);
   color: white;
@@ -241,9 +354,6 @@ html, body, #root {
   flex-direction: column;
   gap: 16px;
 }
-.settings::-webkit-scrollbar { width: 6px; }
-.settings::-webkit-scrollbar-track { background: transparent; }
-.settings::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 .settings-group {
   display: flex;

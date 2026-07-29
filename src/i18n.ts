@@ -34,7 +34,8 @@ export type TKey =
   | "settings_online"
   | "settings_offline"
   | "settings_autostart"
-  | "settings_autostart_hint";
+  | "settings_autostart_hint"
+  | "settings_system";
 
 export const i18n: Record<Lang, Record<TKey, string>> = {
   en: {
@@ -72,6 +73,7 @@ export const i18n: Record<Lang, Record<TKey, string>> = {
     settings_offline: "Offline",
     settings_autostart: "Launch at system startup",
     settings_autostart_hint: "Automatically start HermesTray when you log in",
+    settings_system: "System",
   },
   zh: {
     tab_chat: "聊天",
@@ -108,5 +110,6 @@ export const i18n: Record<Lang, Record<TKey, string>> = {
     settings_offline: "离线",
     settings_autostart: "跟随系统自动启动",
     settings_autostart_hint: "登录时自动启动 HermesTray",
+    settings_system: "系统",
   },
 };

@@ -140,7 +140,7 @@ export function SettingsPanel({ config, onSave, onTest, connected, status, lang 
         {t("settings_quick_input")}: <strong>{t("settings_quick_input_fixed")}</strong>
       </div>
 
-      <div className="settings-section">{t("settings_language")}</div>
+      <div className="settings-section">{t("settings_system")}</div>
       <div className="settings-group">
         <label htmlFor="autostart" style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
           <input
