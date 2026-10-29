@@ -14,16 +14,23 @@
 
 - **系统托盘图标** — H 字母 + 状态圆形背景，一目了然：
   - 🟢 绿色 = 待命（就绪）
-  - 🟡 橙色 = 忙碌（处理中）
+  - 🟡 橙色 = 忙碌（处理中，含你自己的流式聊天）
   - ⚪ 灰色 = 断连（无法连接）
-- **全局快捷键** — 随时随地切换窗口：
+- **全局快捷键** — 均可配置：
   - `Alt+Space`（可配置）— 显示/隐藏聊天窗口
-  - `Ctrl+Alt+Shift+C` — 快速输入
-- **聊天界面** — 发送消息并获取回复
-- **会话管理** — 自动创建会话，随时开始新会话
-- **完全可配置** — API 地址、密钥、轮询间隔、快捷键、语言均可自由设置
-- **中英文界面** — 点击顶部语言按钮或在设置中切换
-- **跨平台** — Windows、macOS、Linux
+  - `Ctrl+Alt+Shift+C`（可配置）— 快速输入：呼出窗口并聚焦输入框
+- **流式聊天** — 回复逐字渲染，带**停止**按钮可随时中断
+- **会话管理** — 自动创建会话，随时开始新会话；**会话侧栏**可列出、恢复、删除历史会话；会话自动生成标题（双击可重命名）
+- **本地历史** — 聊天记录持久化到 `~/HermesTray/history.json`，启动时自动恢复
+- **Markdown 渲染** — 回复以 Markdown 呈现（代码块、表格、列表），**语法高亮**，代码块一键复制
+- **消息操作** — 悬停回复可复制或重新生成
+- **导出** — 任意会话可导出为 Markdown 文件
+- **输入历史** — ↑/↓ 键翻看之前输入的内容
+- **回复与断连通知** — 窗口隐藏时收到回复、以及连接断开时都会弹系统通知
+- **图片支持** — 粘贴或上传图片（多模态）
+- **明暗主题** — 深色/浅色可切换
+- **检查更新** — 通过 GitHub Releases 检测新版本（托盘菜单 & 设置页）
+- **完全可配置** — API 地址、密钥、轮询间隔、快捷键、开机自启、语言均可自由设置；窗口大小/位置会被记住；**Esc** 一键隐藏窗口
 
 ## 下载安装
 
@@ -34,21 +41,6 @@
 | macOS | [HermesTray_aarch64.dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Apple Silicon |
 
 👉 [所有版本](https://github.com/jackclub-cn/HermesTray/releases)
-
-## 环境要求
-
-- **系统托盘图标** — H 字母 + 状态圆形背景，一目了然：
-  - 🟢 绿色 = 待命（就绪）
-  - 🟡 橙色 = 忙碌（处理中）
-  - ⚪ 灰色 = 断连（无法连接）
-- **全局快捷键** — 随时随地切换窗口：
-  - `Alt+Space`（可配置）— 显示/隐藏聊天窗口
-  - `Ctrl+Alt+Shift+C` — 快速输入
-- **聊天界面** — 发送消息并获取回复
-- **会话管理** — 自动创建会话，随时开始新会话
-- **完全可配置** — API 地址、密钥、轮询间隔、快捷键、语言均可自由设置
-- **中英文界面** — 点击顶部语言按钮或在设置中切换
-- **跨平台** — Windows、macOS、Linux
 
 ## 环境要求
 
@@ -156,7 +148,17 @@ HermesTray 每隔 N 秒（可配置，默认 3 秒）轮询 `GET /health/detaile
 - `gateway_state == "running"` → **待命**（绿色）
 - 任何错误或超时 → **断连**（灰色）
 
-聊天时，HermesTray 也会在等待回复期间自报**忙碌**状态，因为同步 API 聊天会话不会增加 `active_agents` 计数。
+聊天时，HermesTray 也会在流式回复进行期间自报**忙碌**状态，因为 API 聊天会话不会增加 `active_agents` 计数。断连期间轮询会指数退避，避免对失效服务器高频请求。
+
+#### 忙碌计数器过期自愈
+
+`active_agents` 持久化在 gateway 的 `gateway_state.json` 里，Hermes 只在 turn 边界才重写它。如果某个 turn 在最后一次写回前被杀掉，这个计数器就可能一直停在非零，`/health/detailed` 也就一直回 `gateway_busy: true`。为避免图标被这种残留计数卡在橙色，HermesTray 会给每个忙碌声明计时：
+
+- 有实时工作佐证（`api_server.active_runs > 0`，或 `readiness.checks.background_queues.*` 任一 > 0）→ **忙碌**
+- 报告的 `active_agents` 发生变化 → **忙碌**，计时重新开始
+- 否则，未经佐证且数值一直不变的声明在 **15 分钟**后过期 → **待命**，并输出一行日志（`[status] active_agents=N unchanged for Ns with no live work; treating the counter as stale`）
+
+取舍：真正持续超过 15 分钟且没有实时佐证的 turn（例如非 API 平台上很长的 turn）在计数再次变化前会显示为待命。
 
 ## 设置说明
 
@@ -168,6 +170,9 @@ HermesTray 每隔 N 秒（可配置，默认 3 秒）轮询 `GET /health/detaile
 | API 密钥 | 空 | Bearer 认证令牌 |
 | 轮询间隔 | 3 秒 | 检查 Hermes 状态的频率 |
 | 切换窗口快捷键 | `Alt+Space` | 显示/隐藏窗口的全局快捷键 |
+| 快速输入快捷键 | `Ctrl+Alt+Shift+C` | 呼出窗口并聚焦输入框的全局快捷键 |
+| 开机自启 | 关 | 登录系统时自动启动 |
+| 主题 | 深色 | 界面主题（深色 / 浅色）|
 | 语言 | English | 界面语言（English / 中文）|
 
 配置文件保存在 `~/HermesTray/config.json`。
@@ -175,8 +180,8 @@ HermesTray 每隔 N 秒（可配置，默认 3 秒）轮询 `GET /health/detaile
 ## 技术栈
 
 - **Tauri 2.0** — 原生桌面壳
-- **Rust** — 系统托盘、全局快捷键、HTTP 轮询、托盘图标渲染
-- **React + TypeScript** — 聊天界面，中英文国际化
+- **Rust** — 系统托盘、全局快捷键、HTTP 轮询与 SSE 流式、托盘图标渲染
+- **React + TypeScript** — 聊天界面，Markdown 渲染，中英文国际化
 - **Vite** — 前端打包
 
 ## English Version

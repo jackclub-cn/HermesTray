@@ -14,16 +14,23 @@ Monitor your Hermes Agent status and chat with it — right from your system tra
 
 - **System tray icon** — shows H letter on colored circle at a glance:
   - 🟢 Green = idle (ready)
-  - 🟡 Orange = busy (processing)
+  - 🟡 Orange = busy (processing, including your own streaming chats)
   - ⚪ Gray = disconnected
-- **Global shortcuts** — toggle window from anywhere:
+- **Global shortcuts** — configurable:
   - `Alt+Space` (configurable) — show/hide chat window
-  - `Ctrl+Alt+Shift+C` — quick input
-- **Chat interface** — send messages and receive responses
-- **Session management** — auto-creates sessions, start fresh anytime
-- **Configurable** — API URL, key, polling interval, hotkey, language all editable
-- **Chinese / English UI** — switch language from the header button or Settings
-- **Cross-platform** — Windows, macOS, Linux
+  - `Ctrl+Alt+Shift+C` (configurable) — quick input: open window and focus the input
+- **Streaming chat** — responses render token-by-token, with a **Stop** button to cancel
+- **Session management** — auto-creates sessions, start fresh anytime, plus a **session sidebar** to list, resume, and delete past sessions; sessions get auto-titles (double-click to rename)
+- **Local history** — chat history is persisted to `~/HermesTray/history.json` and auto-restored on launch
+- **Markdown rendering** — replies render as Markdown (code blocks, tables, lists) with **syntax highlighting** and one-click copy for code
+- **Message actions** — hover a reply to copy or regenerate it
+- **Export** — save any session as a Markdown file
+- **Input history** — ↑/↓ recalls previous prompts
+- **Reply & disconnect notifications** — system notifications for new replies (window hidden) and dropped connections
+- **Image support** — paste or attach images (multimodal)
+- **Theme** — dark / light switchable
+- **Update check** — checks GitHub Releases for new versions (tray menu & Settings)
+- **Fully configurable** — API URL, key, polling interval, hotkeys, autostart, language; window size/position remembered; **Esc** hides the window
 
 ## Download
 
@@ -34,21 +41,6 @@ Monitor your Hermes Agent status and chat with it — right from your system tra
 | macOS | [HermesTray_aarch64.dmg](https://github.com/jackclub-cn/HermesTray/releases/latest) | macOS 11+ Apple Silicon |
 
 👉 [All releases](https://github.com/jackclub-cn/HermesTray/releases)
-
-## Prerequisites
-
-- **System tray icon** — shows H letter on colored circle at a glance:
-  - 🟢 Green = idle (ready)
-  - 🟡 Orange = busy (processing)
-  - ⚪ Gray = disconnected
-- **Global shortcuts** — toggle window from anywhere:
-  - `Alt+Space` (configurable) — show/hide chat window
-  - `Ctrl+Alt+Shift+C` — quick input
-- **Chat interface** — send messages and receive responses
-- **Session management** — auto-creates sessions, start fresh anytime
-- **Configurable** — API URL, key, polling interval, hotkey, language all editable
-- **Chinese / English UI** — switch language from the header button or Settings
-- **Cross-platform** — Windows, macOS, Linux
 
 ## Prerequisites
 
@@ -156,7 +148,17 @@ HermesTray polls `GET /health/detailed` every N seconds (configurable, default 3
 - `gateway_state == "running"` → **idle** (green)
 - any error / timeout → **disconnected** (gray)
 
-When chatting, HermesTray also self-reports **busy** while waiting for a response, since synchronous API chat sessions don't increment `active_agents`.
+When chatting, HermesTray also self-reports **busy** while a streaming reply is in flight, since API chat sessions don't increment `active_agents`. Polling backs off exponentially while disconnected to avoid hammering a dead server.
+
+#### Stale busy claims
+
+`active_agents` is persisted in the gateway's `gateway_state.json`, which Hermes only rewrites at turn boundaries. A turn that dies before its final write can leave the counter stuck above zero, and `/health/detailed` then reports `gateway_busy: true` forever. To keep that from pinning the tray on orange, HermesTray ages every busy claim:
+
+- live work backs the claim (`api_server.active_runs > 0`, or any of `readiness.checks.background_queues.* > 0`) → **busy**
+- the reported `active_agents` changes → **busy**, and the clock restarts
+- otherwise, an unchanged and uncorroborated claim expires after **15 minutes** → **idle**, with one log line (`[status] active_agents=N unchanged for Ns with no live work; treating the counter as stale`)
+
+Trade-off: a genuine turn lasting more than 15 minutes with no live corroboration (e.g. a long non-API gateway turn) reads as idle until its count changes again.
 
 ## Configuration
 
@@ -168,6 +170,9 @@ Settings are accessible from the tray menu (right-click → Settings) or the Set
 | API Key | *(empty)* | Bearer token for authentication |
 | Poll Interval | 3s | How often to check status |
 | Toggle Hotkey | `Alt+Space` | Global shortcut to show/hide window |
+| Quick Input Hotkey | `Ctrl+Alt+Shift+C` | Global shortcut to open the window and focus the input |
+| Autostart | off | Launch at system login |
+| Theme | Dark | UI theme (dark / light) |
 | Language | English | UI language (English / 中文) |
 
 Config is saved to `~/HermesTray/config.json`.
@@ -175,17 +180,13 @@ Config is saved to `~/HermesTray/config.json`.
 ## Tech Stack
 
 - **Tauri 2.0** — native desktop shell
-- **Rust** — system tray, global shortcuts, HTTP polling, tray icon rendering
-- **React + TypeScript** — chat UI with Chinese/English i18n
+- **Rust** — system tray, global shortcuts, HTTP polling + SSE streaming, tray icon rendering
+- **React + TypeScript** — chat UI with Markdown rendering and Chinese/English i18n
 - **Vite** — frontend bundling
 
 ## 中文版
 
 [中文文档](README.zh.md)
-
-## English Version
-
-[English Documentation](README.md)
 
 ## TODO
 

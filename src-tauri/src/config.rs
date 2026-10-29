@@ -14,10 +14,21 @@ pub struct ConfigFile {
     pub autostart: bool,
     #[serde(default = "default_language")]
     pub language: String,
+    #[serde(default = "default_theme")]
+    pub theme: String,
+    // Window geometry (backend-only, restored on startup)
+    #[serde(default)]
+    pub window_pos: Option<(i32, i32)>,
+    #[serde(default)]
+    pub window_size: Option<(u32, u32)>,
 }
 
 fn default_language() -> String {
     "en".into()
+}
+
+fn default_theme() -> String {
+    "dark".into()
 }
 
 impl Default for ConfigFile {
@@ -30,6 +41,9 @@ impl Default for ConfigFile {
             quick_input_hotkey: "Ctrl+Alt+Shift+C".into(),
             autostart: false,
             language: "en".into(),
+            theme: "dark".into(),
+            window_pos: None,
+            window_size: None,
         }
     }
 }
@@ -43,14 +57,20 @@ impl ConfigFile {
         dir.join("config.json")
     }
 
+    /// Local chat history file (~/HermesTray/history.json)
+    pub fn history_path() -> PathBuf {
+        let dir = dirs::home_dir()
+            .unwrap_or_else(|| PathBuf::from("."))
+            .join("HermesTray");
+        dir.join("history.json")
+    }
+
     pub fn load() -> Self {
         let p = Self::path();
         if let Ok(data) = fs::read_to_string(&p) {
             serde_json::from_str(&data).unwrap_or_default()
         } else {
-            let cfg = Self::default();
-            let _ = cfg.save();
-            cfg
+            Self::default()
         }
     }
 

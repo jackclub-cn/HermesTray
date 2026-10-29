@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { sendNotification } from "@tauri-apps/plugin-notification";
 import "./App.css";
 import { i18n, type Lang, type TKey } from "./i18n";
 import { ChatPanel } from "./components/ChatPanel";
@@ -13,12 +14,15 @@ export type ConfigFile = {
   api_url: string;
   api_key: string;
   poll_interval_secs: number;
-  poll_interval_secs_f64?: number;
   toggle_hotkey: string;
   quick_input_hotkey: string;
   autostart: boolean;
   language: string;
+  theme: string;
 };
+
+/** Result of an update check. */
+export type UpdateInfo = { version: string; url: string };
 
 function App() {
   const [tab, setTab] = useState<Tab>("chat");
@@ -31,18 +35,37 @@ function App() {
     quick_input_hotkey: "Ctrl+Alt+Shift+C",
     autostart: false,
     language: "en",
+    theme: "dark",
   });
   const [connected, setConnected] = useState(false);
   const [ready, setReady] = useState(false);
   const [lang, setLang] = useState<Lang>("en");
+  const lastStatusRef = useRef<Status>("disconnected");
 
-  const t = (key: TKey) => i18n[lang][key] || i18n.en[key] || key;
+  const t = useCallback(
+    (key: TKey) => i18n[lang][key] || i18n.en[key] || key,
+    [lang]
+  );
 
-  // Apply config → set language
+  // Apply config → language + theme
   const applyConfig = (cfg: ConfigFile) => {
     setConfig(cfg);
     setLang((cfg.language === "zh" ? "zh" : "en") as Lang);
+    document.documentElement.dataset.theme = cfg.theme === "light" ? "light" : "dark";
   };
+
+  // Check for updates against GitHub Releases. Returns human-readable result.
+  const runUpdateCheck = useCallback(async (): Promise<string> => {
+    try {
+      const info = await invoke<UpdateInfo | null>("check_update");
+      if (info && info.url) {
+        return `${t("settings_update_available")} v${info.version} — ${t("chat_export")}: ${info.url}`;
+      }
+      return t("settings_update_latest");
+    } catch (e) {
+      return `${t("settings_update_failed")}: ${e}`;
+    }
+  }, [t]);
 
   useEffect(() => {
     // Load config from Rust backend
@@ -71,7 +94,7 @@ function App() {
       setConnected(event.payload.status !== "disconnected");
     });
 
-    // Listen for quick-input event (Ctrl+Alt+Shift+C)
+    // Listen for quick-input event
     const unlistenQuick = listen("quick-input", () => {
       setTab("chat");
     });
@@ -81,12 +104,50 @@ function App() {
       if (event.payload === "settings") setTab("settings");
     });
 
+    // Tray menu: New Chat
+    const unlistenNewSession = listen("new-session", () => {
+      setTab("chat");
+    });
+
+    // Tray menu: Check for Updates
+    const unlistenCheckUpdate = listen("check-update", () => {
+      runUpdateCheck().then((msg) => {
+        sendNotification({ title: "HermesTray", body: msg });
+      });
+    });
+
+    // Esc hides the window (skip while capturing a hotkey in Settings)
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const el = document.activeElement as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA") && el.hasAttribute("readonly")) {
+        return; // hotkey capture field
+      }
+      invoke("hide_window").catch(() => {});
+    };
+    window.addEventListener("keydown", onKeyDown);
+
     return () => {
       unlistenStatus.then((fn) => fn());
       unlistenQuick.then((fn) => fn());
       unlistenNav.then((fn) => fn());
+      unlistenNewSession.then((fn) => fn());
+      unlistenCheckUpdate.then((fn) => fn());
+      window.removeEventListener("keydown", onKeyDown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Notify once when the connection drops
+  useEffect(() => {
+    if (status === "disconnected" && lastStatusRef.current !== "disconnected") {
+      sendNotification({
+        title: "HermesTray",
+        body: t("status_notification_disconnected"),
+      });
+    }
+    lastStatusRef.current = status;
+  }, [status, t]);
 
   const handleSaveConfig = useCallback(async (newConfig: ConfigFile) => {
     try {
@@ -185,6 +246,7 @@ function App() {
             config={config}
             onSave={handleSaveConfig}
             onTest={handleTestConnection}
+            onCheckUpdate={runUpdateCheck}
             connected={connected}
             status={status}
             lang={lang}

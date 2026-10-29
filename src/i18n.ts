@@ -8,6 +8,17 @@ export type TKey =
   | "status_busy"
   | "chat_placeholder"
   | "chat_send"
+  | "chat_stop"
+  | "chat_copy"
+  | "chat_regenerate"
+  | "chat_sessions"
+  | "chat_resumed_session"
+  | "chat_reply_notification"
+  | "chat_delete_session"
+  | "chat_empty_sessions"
+  | "chat_export"
+  | "chat_restored_session"
+  | "chat_rename_session"
   | "chat_new_session"
   | "chat_hint"
   | "chat_new_session_started"
@@ -23,7 +34,8 @@ export type TKey =
   | "settings_toggle_hotkey"
   | "settings_toggle_hint"
   | "settings_quick_input"
-  | "settings_quick_input_fixed"
+  | "settings_quick_input_hotkey"
+  | "settings_quick_input_hint"
   | "settings_language"
   | "settings_language_hint"
   | "settings_save"
@@ -35,7 +47,17 @@ export type TKey =
   | "settings_offline"
   | "settings_autostart"
   | "settings_autostart_hint"
-  | "settings_system";
+  | "settings_system"
+  | "settings_theme"
+  | "settings_theme_hint"
+  | "settings_check_update"
+  | "settings_update_checking"
+  | "settings_update_available"
+  | "settings_update_latest"
+  | "settings_update_failed"
+  | "settings_stats_uptime"
+  | "settings_stats_sessions"
+  | "status_notification_disconnected";
 
 export const i18n: Record<Lang, Record<TKey, string>> = {
   en: {
@@ -46,6 +68,14 @@ export const i18n: Record<Lang, Record<TKey, string>> = {
     status_busy: "busy",
     chat_placeholder: "Type a message...",
     chat_send: "Send",
+    chat_stop: "Stop",
+    chat_copy: "Copy",
+    chat_regenerate: "Regenerate",
+    chat_sessions: "Sessions",
+    chat_resumed_session: "Resumed session — keep chatting below.",
+    chat_reply_notification: "New reply received",
+    chat_delete_session: "Delete session",
+    chat_empty_sessions: "No sessions yet",
     chat_new_session: "New session",
     chat_hint: "Press Enter to send, Shift+Enter for newline.",
     chat_new_session_started: "New session started. Press Enter to send.",
@@ -59,9 +89,10 @@ export const i18n: Record<Lang, Record<TKey, string>> = {
     settings_poll_hint: "How often to check Hermes status",
     settings_shortcuts: "Shortcuts",
     settings_toggle_hotkey: "Toggle Window",
-    settings_toggle_hint: "Global shortcut to show/hide the window (e.g. Alt+Space, Ctrl+Alt+H)",
+    settings_toggle_hint: "Click the field then press the shortcut you want to use (e.g. Alt+Space, Ctrl+Alt+H)",
     settings_quick_input: "Quick Input",
-    settings_quick_input_fixed: "Ctrl+Alt+Shift+C (fixed)",
+    settings_quick_input_hotkey: "Quick Input Hotkey",
+    settings_quick_input_hint: "Opens the window and focuses the input field",
     settings_language: "Language",
     settings_language_hint: "Interface language",
     settings_save: "Save",
@@ -74,6 +105,19 @@ export const i18n: Record<Lang, Record<TKey, string>> = {
     settings_autostart: "Launch at system startup",
     settings_autostart_hint: "Automatically start HermesTray when you log in",
     settings_system: "System",
+    settings_theme: "Theme",
+    settings_theme_hint: "Interface theme (dark / light)",
+    settings_check_update: "Check for Updates",
+    settings_update_checking: "Checking for updates...",
+    settings_update_available: "New version available",
+    settings_update_latest: "You're on the latest version",
+    settings_update_failed: "Update check failed",
+    settings_stats_uptime: "Uptime",
+    settings_stats_sessions: "Sessions",
+    status_notification_disconnected: "Lost connection to Hermes",
+    chat_export: "Export",
+    chat_restored_session: "Restored previous session — continue chatting below.",
+    chat_rename_session: "Double-click to rename",
   },
   zh: {
     tab_chat: "聊天",
@@ -83,6 +127,14 @@ export const i18n: Record<Lang, Record<TKey, string>> = {
     status_busy: "忙碌",
     chat_placeholder: "输入消息...",
     chat_send: "发送",
+    chat_stop: "停止",
+    chat_copy: "复制",
+    chat_regenerate: "重新生成",
+    chat_sessions: "会话",
+    chat_resumed_session: "已恢复会话 — 继续聊天即可。",
+    chat_reply_notification: "收到新的回复",
+    chat_delete_session: "删除会话",
+    chat_empty_sessions: "暂无会话",
     chat_new_session: "新会话",
     chat_hint: "按 Enter 发送，Shift+Enter 换行",
     chat_new_session_started: "新会话已开始，按 Enter 发送",
@@ -96,9 +148,10 @@ export const i18n: Record<Lang, Record<TKey, string>> = {
     settings_poll_hint: "检查 Hermes 状态的频率",
     settings_shortcuts: "快捷键",
     settings_toggle_hotkey: "切换窗口",
-    settings_toggle_hint: "全局快捷键，显示/隐藏窗口（如 Alt+Space、Ctrl+Alt+H）",
+    settings_toggle_hint: "点击输入框后直接按下想要设置的快捷键（如 Alt+Space、Ctrl+Alt+H）",
     settings_quick_input: "快速输入",
-    settings_quick_input_fixed: "Ctrl+Alt+Shift+C（固定）",
+    settings_quick_input_hotkey: "快速输入快捷键",
+    settings_quick_input_hint: "呼出窗口并聚焦输入框",
     settings_language: "语言",
     settings_language_hint: "界面语言",
     settings_save: "保存",
@@ -111,5 +164,18 @@ export const i18n: Record<Lang, Record<TKey, string>> = {
     settings_autostart: "跟随系统自动启动",
     settings_autostart_hint: "登录时自动启动 HermesTray",
     settings_system: "系统",
+    settings_theme: "主题",
+    settings_theme_hint: "界面主题（深色 / 浅色）",
+    settings_check_update: "检查更新",
+    settings_update_checking: "正在检查更新...",
+    settings_update_available: "发现新版本",
+    settings_update_latest: "已是最新版本",
+    settings_update_failed: "检查更新失败",
+    settings_stats_uptime: "运行时长",
+    settings_stats_sessions: "会话数",
+    status_notification_disconnected: "与 Hermes 的连接已断开",
+    chat_export: "导出",
+    chat_restored_session: "已恢复上次会话 — 继续聊天即可。",
+    chat_rename_session: "双击重命名",
   },
 };
